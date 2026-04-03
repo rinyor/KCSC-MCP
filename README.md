@@ -1,127 +1,109 @@
 # KCSC MCP Server
 
-> Meta Description: 국가건설기준센터 KCSC OpenAPI를 Claude Desktop 등 MCP 클라이언트에서 바로 검색하고 읽을 수 있게 만드는 Python MCP 서버입니다.
->
-> Labels: mcp, kcsc, claude-desktop, python, construction, kcs, kds, openapi
+**국가건설기준(KCS/KDS)을 AI 대화 안에서 바로 검색하고 읽습니다**
+**Search and read Korean Construction Standards (KCS/KDS) directly within AI conversations**
 
-건설기준 문서는 공개되어 있어도, 실제로 써보면 늘 한 걸음 멉니다. 검색은 웹에서 하고, 본문은 따로 열고, 필요한 조항은 다시 정리해야 합니다. 이 프로젝트는 그 왕복을 줄이기 위해 만들었습니다. 국가건설기준센터(KCSC) OpenAPI를 MCP 서버로 감싸서, Claude Desktop 같은 MCP 클라이언트 안에서 KCS와 KDS를 바로 찾고, 읽고, 문서 내부까지 검색할 수 있게 합니다.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-green.svg)](https://python.org)
+[![MCP](https://img.shields.io/badge/MCP-1.0-orange.svg)](https://modelcontextprotocol.io)
 
-쉽게 말하면 이 저장소는 "건설기준을 AI 작업 흐름 안으로 가져오는 다리"입니다.
+---
 
-## 왜 이 프로젝트가 필요한가
+## 소개 | Introduction
 
-좋은 도구는 새로운 기능을 더하는 도구가 아니라, 이미 있는 지식을 더 가까이 가져오는 도구입니다. KCSC에는 이미 중요한 기준 문서가 있습니다. 문제는 접근 경로가 인간 중심이라는 점입니다. 사람이 브라우저를 열고, 키워드를 바꾸고, 페이지를 넘기고, 필요한 단락을 다시 복사하는 구조는 검토 속도를 늦춥니다.
+KCSC MCP Server는 국가건설기준센터(KCSC) OpenAPI를 MCP 서버로 감싸서, Claude Desktop/Claude Code/Codex 등 AI 클라이언트 안에서 KCS(건설기준)와 KDS(설계기준)를 바로 검색하고, 본문을 읽고, 특정 조항을 찾을 수 있게 합니다.
 
-MCP는 그 구조를 바꿉니다. 문서를 "파일"이나 "웹페이지"가 아니라 "대화 가능한 컨텍스트"로 바꿔주기 때문입니다. 이 서버를 붙이면 Claude Desktop 같은 클라이언트에서 다음이 가능해집니다.
+KCSC MCP Server wraps the Korean Construction Standard Center (KCSC) OpenAPI as an MCP server, enabling AI clients like Claude Desktop, Claude Code, and Codex to search, read, and navigate KCS (Construction Standards) and KDS (Design Standards) documents directly.
 
-- KCS/KDS 코드 목록 조회
-- 키워드 기반 코드 검색
-- 특정 기준 문서 본문 조회
-- 문서 내부 제목/본문 단락 검색
+> 브라우저를 열고, 키워드를 바꾸고, 페이지를 넘기는 대신 -- AI에게 물어보세요.
+> Instead of opening a browser, changing keywords, and flipping pages -- just ask your AI.
 
-검색의 길이가 짧아질수록 판단의 깊이는 길어집니다.
+---
 
-## 제공 도구
+## 이런 분들에게 유용합니다 | Who Is This For?
 
-| Tool | 설명 |
-|------|------|
-| `kcsc_list_codes` | KCS/KDS 코드 목록을 조회합니다. 타입, 키워드, 페이지네이션을 지원합니다. |
-| `kcsc_search_codes` | 코드명 기준으로 빠르게 검색합니다. |
-| `kcsc_get_content` | 특정 문서의 전체 본문을 가져옵니다. HTML 제거 옵션을 지원합니다. |
-| `kcsc_search_sections` | 특정 문서 안에서 제목과 본문 단락을 키워드로 검색합니다. |
+| 대상 | 활용 예시 |
+|------|----------|
+| **건설 엔지니어** | 설계 검토 중 KDS 기준 조항을 즉시 확인 |
+| **시공 관리자** | KCS 시공 기준 본문을 AI 대화 안에서 바로 조회 |
+| **건축사/감리원** | 관련 기준 문서를 키워드로 빠르게 검색 |
+| **공무원** | 사업 기획 시 적용 기준 확인 |
+| **학생/연구자** | 건설기준 학습 및 조항 검색 |
 
-## 이 프로젝트가 해결하는 실제 불편
+| Who | Use Case |
+|-----|----------|
+| **Civil engineers** | Instantly check KDS design standard clauses during review |
+| **Construction managers** | Query KCS construction standards within AI conversations |
+| **Architects / Supervisors** | Search related standard documents by keyword |
+| **Government officials** | Verify applicable standards during project planning |
+| **Students & researchers** | Study and search construction standard clauses |
 
-KCSC 응답에는 `code`와 `fullCode`가 함께 등장합니다. 이 둘을 처음 보면 꽤 헷갈립니다. 실제 문서 본문 조회는 보통 6자리 `code` 기준으로 이뤄지지만, 목록 응답에서는 더 긴 `fullCode`가 더 눈에 잘 들어옵니다. 그래서 이 서버는 `kcsc_get_content`와 `kcsc_search_sections`에서 6자리 `code`와 더 긴 `fullCode`를 모두 받을 수 있게 처리해 두었습니다.
+---
 
-또 하나는 SSL 문제입니다. 일부 Windows 환경이나 사내망 환경에서는 `certifi` 체인만으로 KCSC HTTPS 연결이 실패할 수 있습니다. 이 프로젝트는 기본적으로 Windows 시스템 인증서 저장소를 우선 활용해서 그 문제를 완화합니다.
+## 제공 도구 | Available Tools
 
-## 프로젝트 구조
+| # | 도구 Tool | 설명 Description |
+|---|-----------|-----------------|
+| 1 | `kcsc_list_codes` | KCS/KDS 코드 목록 조회 (타입, 키워드, 페이지네이션) / List codes with filtering |
+| 2 | `kcsc_search_codes` | 코드명 기반 빠른 검색 / Quick search by code name |
+| 3 | `kcsc_get_content` | 특정 문서 전체 본문 조회 (HTML 제거 옵션) / Get full document content |
+| 4 | `kcsc_search_sections` | 문서 내부 제목/본문 키워드 검색 / Search sections within a document |
 
-```text
-KCSC-MCP/
-├─ server.py
-├─ pyproject.toml
-├─ requirements.txt
-├─ .env.example
-├─ tests/
-│  └─ test_server.py
-└─ README.md
-```
+---
 
-## 빠른 시작
+## 빠른 시작 가이드 | Quick Start Guide
 
-### 1. 저장소 준비
+### 1단계: 설치 | Step 1: Install
 
-```powershell
+```bash
 git clone https://github.com/sinmb79/KCSC-MCP.git
 cd KCSC-MCP
-```
 
-### 2. 가상환경 생성
-
-```powershell
 python -m venv .venv
-.\.venv\Scripts\python -m pip install --upgrade pip
+
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+
+# 설치 | Install
+pip install -e ".[dev]"
 ```
 
-### 3. 의존성 설치
+### 2단계: API 키 설정 | Step 2: Configure API Key
 
-가장 간단한 방법은 editable 모드로 설치하는 것입니다.
+KCSC API 키를 [https://www.kcsc.re.kr/support/api](https://www.kcsc.re.kr/support/api)에서 발급받으세요.
 
-```powershell
-.\.venv\Scripts\python -m pip install -e ".[dev]"
+Get your API key from [https://www.kcsc.re.kr/support/api](https://www.kcsc.re.kr/support/api).
+
+```bash
+# Windows:
+copy .env.example .env
+# macOS/Linux:
+cp .env.example .env
 ```
 
-또는 아래처럼 설치해도 됩니다.
-
-```powershell
-.\.venv\Scripts\python -m pip install -r requirements.txt
-```
-
-### 4. 환경 변수 설정
-
-`.env.example`을 복사해 `.env`를 만듭니다.
-
-```powershell
-Copy-Item .env.example .env
-```
-
-그다음 `.env`에서 `KCSC_API_KEY` 값을 실제 발급 키로 채워주세요.
+`.env` 파일을 편집합니다:
 
 ```env
 KCSC_API_KEY=your_real_kcsc_api_key
 ```
 
-KCSC API 키 발급 페이지:
+### 3단계: 서버 실행 | Step 3: Start Server
 
-[https://www.kcsc.re.kr/support/api](https://www.kcsc.re.kr/support/api)
+```bash
+# 방법 1: Python 직접 실행
+python server.py
 
-## 실행 방법
-
-### 방법 1. Python 파일 직접 실행
-
-```powershell
-.\.venv\Scripts\python server.py
+# 방법 2: 설치된 스크립트
+kcsc-mcp
 ```
 
-### 방법 2. 설치된 스크립트로 실행
+### 4단계: AI 클라이언트 연결 | Step 4: Connect AI Client
 
-```powershell
-.\.venv\Scripts\kcsc-mcp
-```
+#### Claude Desktop
 
-둘 중 어느 쪽을 써도 됩니다. 내부적으로는 같은 MCP 서버를 실행합니다.
-
-## Claude Desktop 연결 방법
-
-Windows 기준 설정 파일은 보통 아래 경로에 있습니다.
-
-```text
-%AppData%\Claude\claude_desktop_config.json
-```
-
-예시:
+`%AppData%\Claude\claude_desktop_config.json` (Windows):
 
 ```json
 {
@@ -137,174 +119,207 @@ Windows 기준 설정 파일은 보통 아래 경로에 있습니다.
 }
 ```
 
-또는 스크립트 진입점을 써도 됩니다.
+#### Claude Code
 
+```bash
+claude mcp add --transport stdio kcsc -- python server.py
+```
+
+#### Codex
+
+```bash
+codex mcp add kcsc -- python server.py
+```
+
+---
+
+## 실전 사용 예시 | Real-World Usage Examples
+
+### 추천 사용 흐름 | Recommended Workflow
+
+가장 효율적인 순서입니다. 처음부터 본문을 열지 마세요.
+
+The most efficient order. Don't open full content first.
+
+```
+1. kcsc_search_codes  -->  관련 문서 후보 찾기
+2. kcsc_list_codes    -->  범위 좁히기 (필요 시)
+3. kcsc_search_sections --> 문서 내부에서 필요한 조항 확인
+4. kcsc_get_content   -->  전체 문맥 읽기
+```
+
+### 예시 1: 콘크리트 관련 기준 찾기 | Example 1: Find Concrete Standards
+
+**AI에게 이렇게 말하세요 | Say this:**
+```
+콘크리트 관련 KCS 기준을 찾아줘
+```
+
+**AI가 호출하는 도구 | Tool called:**
+```python
+kcsc_search_codes(keyword="콘크리트", code_type="KCS")
+```
+
+**결과 예시 | Example result:**
 ```json
-{
-  "mcpServers": {
-    "kcsc": {
-      "command": "D:/Workspace/KCSC-MCP/.venv/Scripts/kcsc-mcp.exe"
-    }
-  }
-}
+[
+  {"code": "114010", "fullCode": "2010114010", "codeName": "콘크리트 공사 일반"},
+  {"code": "114020", "fullCode": "2010114020", "codeName": "콘크리트 배합"},
+  {"code": "114030", "fullCode": "2010114030", "codeName": "콘크리트 타설"}
+]
 ```
 
-## 각 도구를 어떻게 써야 하나
+### 예시 2: 문서 내부 조항 검색 | Example 2: Search Within a Document
 
-### `kcsc_list_codes`
-
-전체 목록을 보고 싶을 때 씁니다. 아직 어떤 코드가 있는지 모를 때 가장 먼저 쓰기 좋습니다.
-
-예시:
-
-```text
-kcsc_list_codes(code_type="KCS", limit=20)
-kcsc_list_codes(keyword="콘크리트", limit=30)
-kcsc_list_codes(code_type="KDS", keyword="도로", limit=10)
+```
+콘크리트 공사 일반 기준에서 거푸집 관련 내용을 찾아줘
 ```
 
-### `kcsc_search_codes`
-
-이미 키워드는 알고 있고, 빠르게 후보만 추리고 싶을 때 적합합니다.
-
-예시:
-
-```text
-kcsc_search_codes(keyword="콘크리트")
-kcsc_search_codes(keyword="교량", code_type="KDS", limit=15)
+```python
+kcsc_search_sections(code_type="KCS", code="114010", keyword="거푸집", limit=5)
 ```
 
-### `kcsc_get_content`
+문서 전체를 읽지 않고도, 해당 키워드가 등장하는 제목과 본문 단락만 빠르게 확인할 수 있습니다.
 
-특정 문서의 전체 본문이 필요할 때 사용합니다. `code` 또는 `fullCode` 둘 다 받을 수 있습니다.
+### 예시 3: 기준 문서 본문 조회 | Example 3: Read Full Document
 
-예시:
-
-```text
-kcsc_get_content(code_type="KCS", code="114010")
-kcsc_get_content(code_type="KCS", code="2010114010")
-kcsc_get_content(code_type="KDS", code="10101000", plain_text=True)
+```
+KCS 114010 전문을 보여줘
 ```
 
-### `kcsc_search_sections`
-
-문서 전체를 다 읽기 전에, 특정 주제가 어디에 나오는지 바로 찾고 싶을 때 가장 유용합니다. 제목과 본문 내용을 같이 검색합니다.
-
-예시:
-
-```text
-kcsc_search_sections(code_type="KCS", code="114010", keyword="공사")
-kcsc_search_sections(code_type="KCS", code="2010114010", keyword="거푸집", limit=5)
-kcsc_search_sections(code_type="KDS", code="10101000", keyword="하중", include_full_contents=True)
+```python
+kcsc_get_content(code_type="KCS", code="114010", plain_text=True)
 ```
 
-## 추천 사용 흐름
+`plain_text=True`로 설정하면 HTML 태그가 제거된 깨끗한 텍스트를 받습니다.
 
-처음부터 본문을 여는 것보다, 아래 흐름이 더 효율적입니다.
+### 예시 4: 도로 설계기준 목록 조회 | Example 4: List Road Design Standards
 
-1. `kcsc_search_codes`로 관련 문서 후보를 찾습니다.
-2. 후보가 많으면 `kcsc_list_codes`로 범위를 더 좁힙니다.
-3. `kcsc_search_sections`로 문서 내부에서 필요한 조항이 있는지 먼저 확인합니다.
-4. 마지막으로 `kcsc_get_content`로 전체 문맥을 읽습니다.
+```
+도로 관련 KDS 기준 목록을 보여줘
+```
 
-이 순서는 검색 비용을 줄이고, 필요한 문맥만 더 빨리 확보하게 해줍니다.
+```python
+kcsc_list_codes(code_type="KDS", keyword="도로", limit=20)
+```
 
-## 캐시 동작
+---
+
+## code와 fullCode | About `code` vs `fullCode`
+
+KCSC API 응답에는 `code`(6자리)와 `fullCode`(10자리)가 함께 나옵니다:
+
+| 필드 | 예시 | 설명 |
+|------|------|------|
+| `code` | `114010` | 문서 본문 조회에 사용하는 6자리 코드 |
+| `fullCode` | `2010114010` | 목록에서 보이는 10자리 전체 코드 |
+
+이 서버에서는 **둘 다** 입력으로 받을 수 있습니다. 내부적으로 적절한 코드로 변환하여 API를 호출합니다.
+
+Both `code` and `fullCode` are accepted as input. The server normalizes them internally.
+
+---
+
+## 캐시 | Caching
 
 반복 호출을 줄이기 위해 메모리 캐시를 사용합니다.
 
-- 코드 목록 캐시
-- 문서 본문 캐시
-
-기본 TTL은 600초이며, 아래 환경 변수로 조정할 수 있습니다.
+| 항목 Item | 설명 Description |
+|----------|-----------------|
+| 코드 목록 | 전체 코드 목록 캐시 |
+| 문서 본문 | 문서별 본문 캐시 |
+| 기본 TTL | 600초 (10분) |
 
 ```env
+# 캐시 TTL 조정 (초) | Adjust cache TTL (seconds)
 KCSC_CACHE_TTL_SECONDS=600
 ```
 
-짧게 두면 최신성이 좋아지고, 길게 두면 응답 속도와 API 호출 효율이 좋아집니다. 무엇을 최적화할지는 사용 맥락에 달려 있습니다.
+---
 
-## SSL / 네트워크 관련 참고
+## SSL/네트워크 설정 | SSL/Network Configuration
 
-기본적으로는 아래 순서로 TLS 검증을 처리합니다.
+일부 Windows/사내망 환경에서 SSL 인증서 문제가 발생할 수 있습니다.
 
-1. `KCSC_CA_BUNDLE`이 있으면 해당 인증서 번들을 사용
-2. `KCSC_VERIFY_SSL=false`면 검증 비활성화
-3. 가능하면 `truststore`를 통해 시스템 인증서 저장소 사용
-4. 마지막으로 기본 `httpx` 검증 사용
+SSL certificate issues may occur in some Windows/corporate network environments.
 
-권장 순서는 다음과 같습니다.
+**검증 우선순위 | Verification priority:**
 
-- 가장 좋음: 기본 설정 그대로 사용
-- 차선: `KCSC_CA_BUNDLE`에 사내 CA 번들 지정
-- 마지막 수단: `KCSC_VERIFY_SSL=false`
+| 순위 | 방법 | 설정 |
+|------|------|------|
+| 1 (권장) | 기본 설정 그대로 | (설정 불필요) |
+| 2 | 사내 CA 번들 지정 | `KCSC_CA_BUNDLE=C:\certs\corp-ca.pem` |
+| 3 (비권장) | SSL 검증 비활성화 | `KCSC_VERIFY_SSL=false` |
 
-예시:
+---
 
-```env
-KCSC_CA_BUNDLE=C:\certs\corp-ca.pem
+## 프로젝트 구조 | Project Structure
+
+```
+KCSC-MCP/
+|-- server.py          # MCP 서버 (4개 도구) | MCP server (4 tools)
+|-- pyproject.toml     # 프로젝트 메타데이터 | Project metadata
+|-- requirements.txt   # 의존성 | Dependencies
+|-- .env.example       # 환경변수 템플릿 | Environment template
++-- tests/
+    +-- test_server.py # 테스트 | Tests
 ```
 
-```env
-KCSC_VERIFY_SSL=false
+---
+
+## 테스트 실행 | Running Tests
+
+```bash
+pytest
 ```
 
-검증을 끄는 것은 편하지만, 보안과 무결성의 대가를 치릅니다. 편리함이 옳음보다 앞서면 시스템은 오래 못 갑니다.
+테스트 항목: 코드 타입 검증, HTML 제거, 오류 정규화, 섹션 검색, 캐시 불변성
 
-## 테스트
+---
 
-```powershell
-.\.venv\Scripts\python -m pytest
-```
+## 환경 변수 목록 | Environment Variables
 
-현재 테스트는 아래를 확인합니다.
+| 변수 Variable | 필수 | 설명 Description |
+|--------------|------|-----------------|
+| `KCSC_API_KEY` | 필수 | KCSC OpenAPI 키 |
+| `KCSC_CACHE_TTL_SECONDS` | 선택 | 캐시 TTL (기본: 600초) |
+| `KCSC_CA_BUNDLE` | 선택 | 사내 CA 인증서 번들 경로 |
+| `KCSC_VERIFY_SSL` | 선택 | SSL 검증 비활성화 (`false`) |
 
-- 코드 타입 검증
-- HTML 제거 로직
-- 오류 메시지 정규화
-- 프리뷰 생성 로직
-- 섹션 검색 로직
-- 캐시 원본 불변성
+---
 
-## 개발 메모
+## 자주 묻는 질문 | FAQ
 
-- Python 3.11 이상을 권장합니다.
-- 로컬 개발에서는 `.env`를 자동으로 읽습니다.
-- `httpx` 및 `httpcore`의 과도한 요청 로그는 기본적으로 낮춰 두었습니다. API 키가 URL에 드러나는 상황을 피하기 위함입니다.
+### API 키를 넣었는데 동작하지 않아요
 
-## 자주 막히는 지점
+- 키 만료 여부 확인
+- `.env` 파일이 프로젝트 루트에 있는지 확인
+- Claude Desktop 설정의 `env`에도 키를 넣었는지 확인
 
-### 1. API 키를 넣었는데 동작하지 않을 때
+### SSL 인증서 오류가 나요
 
-- 키가 만료되지 않았는지 확인합니다.
-- `.env` 경로가 프로젝트 루트에 있는지 확인합니다.
-- Claude Desktop 설정 파일의 `env`에도 값을 직접 넣었는지 확인합니다.
+- 먼저 기본 설정으로 재시도
+- 사내망이면 `KCSC_CA_BUNDLE`에 사내 CA 번들 지정
+- 최후 수단으로만 `KCSC_VERIFY_SSL=false` 사용
 
-### 2. SSL 인증서 오류가 날 때
+### code와 fullCode가 헷갈려요
 
-- 먼저 기본 설정 그대로 다시 시도합니다.
-- 사내망/보안 솔루션 환경이면 `KCSC_CA_BUNDLE`을 우선 고려합니다.
-- 정말 불가피할 때만 `KCSC_VERIFY_SSL=false`를 사용합니다.
+- 둘 다 입력 가능합니다. 서버가 자동으로 변환합니다.
 
-### 3. `code`와 `fullCode`가 헷갈릴 때
+---
 
-- 이 프로젝트에서는 둘 다 받을 수 있게 처리했습니다.
-- 다만 API 내부 조회는 적절한 `code`로 정규화한 뒤 수행합니다.
+## 라이선스 | License
 
-## 로드맵
+MIT License -- 자유롭게 사용, 수정, 배포할 수 있습니다.
 
-이 프로젝트는 지금도 쓸 수 있지만, 더 좋아질 수 있습니다.
+MIT License -- Free to use, modify, and distribute.
 
-- 응답 스키마 문서화 강화
-- 더 정교한 본문 정제
-- 문서 간 연관 검색
-- 배포 패키지 구조 분리
+---
 
-도구는 완성되는 것이 아니라 성숙해집니다.
+## 만든 사람 | Author
 
-## 만든 사람
+**22B Labs** (sinmb79) -- The 4th Path
 
-**22B Labs · 제4의 길 (The 4th Path)**  
-GitHub: `sinmb79`
+문의사항이나 기여는 [Issues](https://github.com/sinmb79/KCSC-MCP/issues)를 이용해 주세요.
 
-기술은 결국 인간의 사유 반경을 넓혀야 합니다. 그렇지 않다면 그것은 자동화일 뿐, 협력은 아닙니다.
+For questions or contributions, please use [Issues](https://github.com/sinmb79/KCSC-MCP/issues).
