@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kcsc-mcp"
+version = "0.1.0"
+description = "MCP server for the KCSC OpenAPI"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "22B Labs" }]
+keywords = ["mcp", "kcsc", "kcs", "kds", "construction"]
+dependencies = [
+  "httpx>=0.28,<1",
+  "mcp>=1.27,<2",
+  "pydantic>=2.12,<3",
+  "python-dotenv>=1.0,<2",
+  "truststore>=0.10,<1",
+]
+
+[project.scripts]
+kcsc-mcp = "server:main"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9",
+]
+
+[tool.setuptools]
+py-modules = ["server"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
