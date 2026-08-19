@@ -52,6 +52,10 @@ KCSC MCP Server wraps the Korean Construction Standard Center (KCSC) OpenAPI as 
 ---
 
 ## 빠른 시작 가이드 | Quick Start Guide
+사전에 ----> 1. claude desktop 버젼을 설치함
+            2. PC에 pythun, node.js를 설치 함
+            3. kcsc에서 API인증키를 발급 받음
+---            
 
 ### 1단계: 설치 | Step 1: Install
 
@@ -89,7 +93,7 @@ cp .env.example .env
 KCSC_API_KEY=your_real_kcsc_api_key
 ```
 
-### 3단계: 서버 실행 | Step 3: Start Server
+### 3단계: 서버 실행 | Step 3: Start Server      ----> 안되면 pass
 
 ```bash
 # 방법 1: Python 직접 실행
@@ -109,10 +113,10 @@ kcsc-mcp
 {
   "mcpServers": {
     "kcsc": {
-      "command": "D:/Workspace/KCSC-MCP/.venv/Scripts/python.exe",
-      "args": ["D:/Workspace/KCSC-MCP/server.py"],
+      "command": "D:/Workspace/KCSC-MCP/.venv/Scripts/python.exe",     ----> 사용하는 경로 적용
+      "args": ["D:/Workspace/KCSC-MCP/server.py"],                     ----> 사용하는 경로 적용
       "env": {
-        "KCSC_API_KEY": "your_kcsc_api_key"
+        "KCSC_API_KEY": "your_kcsc_api_key"                            ----> kcsc의 API키 적용
       }
     }
   }
