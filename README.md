@@ -56,10 +56,10 @@ KCSC MCP Server wraps the Korean Construction Standard Center (KCSC) OpenAPI as 
 ### 1단계: 설치 | Step 1: Install
 
 ```bash
-git clone https://github.com/sinmb79/KCSC-MCP.git
+git clone https://github.com/sinmb79/KCSC-MCP.git     ---->github에서 git을 다운로드 설치함
 cd KCSC-MCP
 
-python -m venv .venv
+python -m venv .venv     ---->pythun이 안되면 py로 다시 실행 함
 
 # Windows:
 .venv\Scripts\activate
