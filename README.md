@@ -53,7 +53,7 @@ KCSC MCP Server wraps the Korean Construction Standard Center (KCSC) OpenAPI as 
 
 ## 빠른 시작 가이드 | Quick Start Guide
 ---
- 사전에 ---->     1. claude desktop 버젼을 설치함  
+ 사전에 ---->  1. claude desktop 버젼을 설치함  
                   2. PC에 pythun, node.js를 설치 함  
                   3. kcsc에서 API인증키를 발급 받음  
 ---            
