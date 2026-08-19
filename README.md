@@ -64,7 +64,7 @@ KCSC MCP Server wraps the Korean Construction Standard Center (KCSC) OpenAPI as 
 git clone https://github.com/sinmb79/KCSC-MCP.git     ---->github에서 git을 다운로드 설치함
 cd KCSC-MCP
 
-python -m venv .venv     ---->pythun이 안되면 py로 다시 실행 함
+python -m venv .venv             ---->pythun이 안되면 py로 다시 실행 함
 
 # Windows:
 .venv\Scripts\activate
